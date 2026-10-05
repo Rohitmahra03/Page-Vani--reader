@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>PageVaani — हर पेज को आवाज़ दें</title>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  min-height: 100vh;
+  color: white;
+  background:
+    radial-gradient(circle at top left, #302b63, transparent 40%),
+    radial-gradient(circle at bottom right, #24243e, transparent 45%),
+    #080812;
+}
+
+.container {
+  width: min(1100px, 92%);
+  margin: auto;
+  padding: 35px 0;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 35px;
+}
+
+.logo {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.logo span {
+  color: #8b5cf6;
+}
+
+.tagline {
+  opacity: .65;
+  font-size: 14px;
+}
+
+.card {
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.12);
+  backdrop-filter: blur(20px);
+  border-radius: 25px;
+  padding: 25px;
+  margin-bottom: 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+
+.hero {
+  text-align: center;
+  padding: 45px 20px;
+}
+
+h1 {
+  font-size: clamp(35px, 7vw, 70px);
+  line-height: 1;
+  margin-bottom: 18px;
+}
+
+.hero p {
+  opacity: .7;
+  max-width: 600px;
+  margin: 0 auto 30px;
+}
+
+.buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+button {
+  border: 0;
+  padding: 13px 20px;
+  border-radius: 14px;
+  cursor: pointer;
+  color: white;
+  background: #7c3aed;
+  font-size: 15px;
+  font-weight: 600;
+  transition: .2s;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.15);
+}
+
+.secondary {
+  background: rgba(255,255,255,.1);
+}
+
+input[type=file] {
+  display: none;
+}
+
+.preview {
+  width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+  border-radius: 18px;
+  margin-top: 20px;
+  display: none;
+}
+
+.camera {
+  display: none;
+}
+
+video {
+  width: 100%;
+  max-height: 420px;
+  border-radius: 18px;
+  object-fit: cover;
+  background: #000;
+}
+
+textarea {
+  width: 100%;
+  min-height: 230px;
+  resize: vertical;
+  background: rgba(0,0,0,.25);
+  color: white;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 16px;
+  padding: 18px;
+  font-size: 16px;
+  outline: none;
+}
+
+.stats {
+  display: flex;
+  gap: 20px;
+  margin-top: 12px;
+  opacity: .65;
+  font-size: 14px;
+}
+
+.progress {
+  height: 7px;
+  background: rgba(255,255,255,.1);
+  border-radius: 20px;
+  overflow: hidden;
+  margin-top: 15px;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: #8b5cf6;
+  transition: .3s;
+}
+
+.status {
+  margin-top: 12px;
+  opacity: .7;
+}
+
+audio {
+  width: 100%;
+  margin-top: 20px;
+}
+
+@media(max-width:600px) {
+
+  .container {
+    padding: 20px 0;
+  }
+
+  .card {
+    padding: 18px;
+  }
+
+  .hero {
+    padding: 30px 10px;
+  }
+
+  header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+
+  <div class="logo">
+    Page<span>Vaani</span>
+  </div>
+
+  <div class="tagline">
+    हर पेज को आवाज़ दें।
+  </div>
+
+</header>
+
+
+<section class="card hero">
+
+<h1>
+  किताब पढ़ें नहीं,<br>
+  <span style="color:#a78bfa">
+    सुनें।
+  </span>
+</h1>
+
+<p>
+  अपनी किताब या किसी भी पेज की फोटो लें।
+  PageVaani text पहचानकर उसे natural AI voice में पढ़ेगा।
+</p>
+
+<div class="buttons">
+
+<label>
+  <button
+    type="button"
+    onclick="document.getElementById('fileInput').click()"
+  >
+    🖼️ Gallery
+  </button>
+</label>
+
+<button onclick="openCamera()">
+  📷 Camera
+</button>
+
+</div>
+
+<input
+  id="fileInput"
+  type="file"
+  accept="image/*"
+>
+
+<img
+  id="preview"
+  class="preview"
+>
+
+</section>
+
+
+<section
+  id="cameraBox"
+  class="card camera"
+>
+
+<video
+  id="video"
+  autoplay
+  playsinline
+></video>
+
+<div
+  class="buttons"
+  style="margin-top:15px"
+>
+
+<button onclick="takePhoto()">
+  📸 Photo लें
+</button>
+
+<button
+  class="secondary"
+  onclick="closeCamera()"
+>
+  बंद करें
+</button>
+
+</div>
+
+<canvas
+  id="canvas"
+  style="display:none"
+></canvas>
+
+</section>
+
+
+<section class="card">
+
+<h2>🔍 Text पहचानें</h2>
+
+<div class="progress">
+
+<div
+  id="progressBar"
+  class="progress-bar"
+></div>
+
+</div>
+
+<div
+  id="status"
+  class="status"
+>
+  कोई image चुनें या camera से photo लें।
+</div>
+
+</section>
+
+
+<section class="card">
+
+<h2>📝 Extracted Text</h2>
+
+<textarea
+  id="text"
+  placeholder="यहाँ OCR से प्राप्त text दिखाई देगा..."
+></textarea>
+
+<div class="stats">
+
+<span>
+Words:
+<b id="words">0</b>
+</span>
+
+<span>
+Characters:
+<b id="chars">0</b>
+</span>
+
+</div>
+
+
+<div
+  class="buttons"
+  style="margin-top:20px"
+>
+
+<button onclick="generateVoice()">
+  🎙️ AI Voice बनाएं
+</button>
+
+<button
+  class="secondary"
+  onclick="clearText()"
+>
+  Clear
+</button>
+
+</div>
+
+</section>
+
+
+<section class="card">
+
+<h2>🎧 PageVaani AI Voice</h2>
+
+<div
+  id="voiceStatus"
+  class="status"
+>
+  Voice अभी generate नहीं हुई।
+</div>
+
+<audio
+  id="audioPlayer"
+  controls
+></audio>
+
+</section>
+
+</div>
+
+
+<script>
+
+const fileInput =
+document.getElementById("fileInput");
+
+const preview =
+document.getElementById("preview");
+
+const textBox =
+document.getElementById("text");
+
+const statusBox =
+document.getElementById("status");
+
+const progressBar =
+document.getElementById("progressBar");
+
+const wordsBox =
+document.getElementById("words");
+
+const charsBox =
+document.getElementById("chars");
+
+const voiceStatus =
+document.getElementById("voiceStatus");
+
+const audioPlayer =
+document.getElementById("audioPlayer");
+
+let cameraStream = null;
+
+
+// IMAGE UPLOAD
+
+fileInput.addEventListener(
+  "change",
+  async () => {
+
+    const file =
+      fileInput.files[0];
+
+    if (!file) return;
+
+    preview.src =
+      URL.createObjectURL(file);
+
+    preview.style.display =
+      "block";
+
+    await runOCR(file);
+
+  }
+);
+
+
+// OCR
+
+async function runOCR(file) {
+
+  statusBox.textContent =
+    "🔍 Text पहचान रहा हूँ...";
+
+  progressBar.style.width =
+    "10%";
+
+  try {
+
+    const result =
+      await Tesseract.recognize(
+        file,
+        "eng+hin",
+        {
+
+          logger: message => {
+
+            if (
+              message.status ===
+              "recognizing text"
+            ) {
+
+              const progress =
+                Math.round(
+                  message.progress * 100
+                );
+
+              progressBar.style.width =
+                progress + "%";
+
+              statusBox.textContent =
+                `🔍 OCR चल रहा है... ${progress}%`;
+
+            }
+
+          }
+
+        }
+      );
+
+    textBox.value =
+      result.data.text.trim();
+
+    updateStats();
+
+    progressBar.style.width =
+      "100%";
+
+    statusBox.textContent =
+      "✅ Text successfully extracted.";
+
+  }
+
+  catch(error) {
+
+    console.error(error);
+
+    statusBox.textContent =
+      "❌ OCR में समस्या हुई।";
+
+  }
+
+}
+
+
+// CAMERA
+
+async function openCamera() {
+
+  const cameraBox =
+    document.getElementById(
+      "cameraBox"
+    );
+
+  try {
+
+    cameraStream =
+      await navigator.mediaDevices
+      .getUserMedia({
+
+        video: {
+          facingMode: {
+            ideal: "environment"
+          }
+        },
+
+        audio: false
+
+      });
+
+    document.getElementById(
+      "video"
+    ).srcObject =
+      cameraStream;
+
+    cameraBox.style.display =
+      "block";
+
+  }
+
+  catch(error) {
+
+    alert(
+      "Camera access नहीं मिला। Browser में camera permission allow करें।"
+    );
+
+  }
+
+}
+
+
+function takePhoto() {
+
+  const video =
+    document.getElementById(
+      "video"
+    );
+
+  const canvas =
+    document.getElementById(
+      "canvas"
+    );
+
+  canvas.width =
+    video.videoWidth;
+
+  canvas.height =
+    video.videoHeight;
+
+  const ctx =
+    canvas.getContext("2d");
+
+  ctx.drawImage(
+    video,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  canvas.toBlob(
+
+    async blob => {
+
+      preview.src =
+        URL.createObjectURL(blob);
+
+      preview.style.display =
+        "block";
+
+      closeCamera();
+
+      await runOCR(blob);
+
+    },
+
+    "image/jpeg",
+    0.92
+
+  );
+
+}
+
+
+function closeCamera() {
+
+  if (cameraStream) {
+
+    cameraStream
+      .getTracks()
+      .forEach(
+        track =>
+          track.stop()
+      );
+
+    cameraStream = null;
+
+  }
+
+  document.getElementById(
+    "cameraBox"
+  ).style.display =
+    "none";
+
+}
+
+
+// TEXT STATS
+
+textBox.addEventListener(
+  "input",
+  updateStats
+);
+
+
+function updateStats() {
+
+  const text =
+    textBox.value.trim();
+
+  const words =
+    text
+      ? text.split(/\s+/).length
+      : 0;
+
+  wordsBox.textContent =
+    words;
+
+  charsBox.textContent =
+    text.length;
+
+}
+
+
+// AI VOICE
+// नया Chunk-based TTS system
+
+async function generateVoice() {
+
+  const text =
+    textBox.value.trim();
+
+  if (!text) {
+
+    alert(
+      "पहले कोई text extract या enter करें।"
+    );
+
+    return;
+
+  }
+
+  voiceStatus.textContent =
+    "🎙️ Natural AI voice तैयार हो रही है...";
+
+  // पुराने audio event को हटाएँ
+  audioPlayer.onended = null;
+
+  try {
+
+    const response =
+      await fetch(
+        "/api/tts",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+            text: text
+          })
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error ||
+        "Voice generation failed"
+      );
+
+    }
+
+    if (
+      !data.chunks ||
+      data.chunks.length === 0
+    ) {
+
+      throw new Error(
+        "Audio नहीं मिला"
+      );
+
+    }
+
+    voiceStatus.textContent =
+      `🔊 ${data.chunks.length} हिस्सों की audio तैयार है।`;
+
+    let currentIndex = 0;
+
+    function playNextChunk() {
+
+      if (
+        currentIndex >=
+        data.chunks.length
+      ) {
+
+        voiceStatus.textContent =
+          "✅ पूरा text पढ़ दिया गया।";
+
+        return;
+
+      }
+
+      const currentChunk =
+        data.chunks[currentIndex];
+
+      const base64Audio =
+        currentChunk.audio;
+
+      const binaryString =
+        atob(base64Audio);
+
+      const bytes =
+        new Uint8Array(
+          binaryString.length
+        );
+
+      for (
+        let i = 0;
+        i < binaryString.length;
+        i++
+      ) {
+
+        bytes[i] =
+          binaryString.charCodeAt(i);
+
+      }
+
+      const audioBlob =
+        new Blob(
+          [bytes],
+          {
+            type: "audio/wav"
+          }
+        );
+
+      const audioURL =
+        URL.createObjectURL(
+          audioBlob
+        );
+
+      audioPlayer.src =
+        audioURL;
+
+      voiceStatus.textContent =
+        `🔊 पढ़ रहा है... ${
+          currentIndex + 1
+        }/${data.chunks.length}`;
+
+      audioPlayer.onended = () => {
+
+        URL.revokeObjectURL(
+          audioURL
+        );
+
+        currentIndex++;
+
+        playNextChunk();
+
+      };
+
+      audioPlayer.play()
+        .catch(error => {
+
+          console.error(
+            "Audio play error:",
+            error
+          );
+
+          voiceStatus.textContent =
+            "▶️ Audio चलाने के लिए Play दबाएँ।";
+
+        });
+
+    }
+
+    playNextChunk();
+
+  }
+
+  catch(error) {
+
+    console.error(
+      "TTS ERROR:",
+      error
+    );
+
+    voiceStatus.textContent =
+      "❌ Voice generate नहीं हो सकी।";
+
+    alert(
+      "Voice generation में समस्या हुई:\n" +
+      error.message
+    );
+
+  }
+
+}
+
+
+// CLEAR
+
+function clearText() {
+
+  textBox.value = "";
+
+  preview.style.display =
+    "none";
+
+  audioPlayer.removeAttribute(
+    "src"
+  );
+
+  audioPlayer.load();
+
+  voiceStatus.textContent =
+    "Voice अभी generate नहीं हुई।";
+
+  updateStats();
+
+}
+
+</script>
+
+</body>
+</html>
